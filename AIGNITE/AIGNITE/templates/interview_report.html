@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .score { font-size: 24px; font-weight: bold; color: #2196F3; }
+        .recommendation { padding: 10px; border-radius: 5px; }
+        .hire { background: #4CAF50; color: white; }
+        .reject { background: #F44336; color: white; }
+        .consider { background: #FF9800; color: white; }
+        .strength { color: #4CAF50; }
+        .weakness { color: #F44336; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Interview Assessment Report</h1>
+        <p><strong>Candidate:</strong> {{candidate_name}}</p>
+        <p><strong>Position:</strong> {{role}} at {{company}}</p>
+        <p><strong>Date:</strong> {{date}}</p>
+    </div>
+
+    <div class="section">
+        <h2>Overall Score</h2>
+        <div class="score">{{overall_score}}/10</div>
+        <div class="recommendation {{recommendation_class}}">
+            <strong>Recommendation:</strong> {{recommendation}}
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Technical Assessment</h2>
+        <p><strong>Score:</strong> {{technical_score}}/10</p>
+        <p><strong>Strengths:</strong></p>
+        <ul>
+            {% for strength in technical_strengths %}
+            <li class="strength">{{strength}}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Areas for Improvement:</strong></p>
+        <ul>
+            {% for weakness in technical_weaknesses %}
+            <li class="weakness">{{weakness}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>HR Assessment</h2>
+        <p><strong>Score:</strong> {{hr_score}}/10</p>
+        <p><strong>Strengths:</strong></p>
+        <ul>
+            {% for strength in hr_strengths %}
+            <li class="strength">{{strength}}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Areas for Improvement:</strong></p>
+        <ul>
+            {% for weakness in hr_weaknesses %}
+            <li class="weakness">{{weakness}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Summary</h2>
+        <p>{{summary}}</p>
+    </div>
+
+    <div class="section">
+        <h2>Next Steps</h2>
+        <p>{{next_steps}}</p>
+    </div>
+</body>
+</html>

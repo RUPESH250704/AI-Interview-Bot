@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Interview Bot</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-container { border: 1px solid #ccc; height: 400px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin: 10px 0; }
+        .user { color: blue; }
+        .assistant { color: green; }
+        .system { color: #666; font-style: italic; }
+        .error { color: red; }
+        #input-container { display: flex; gap: 10px; margin-top: 10px; }
+        #message-input { flex: 1; padding: 10px; }
+        button { padding: 10px 20px; }
+        #upload-section { margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; text-align: center; }
+        #file-input { margin: 10px; }
+        .difficulty-btn { margin: 5px; padding: 15px 25px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; }
+        .easy { background: #4CAF50; color: white; }
+        .medium { background: #FF9800; color: white; }
+        .hard { background: #F44336; color: white; }
+    </style>
+</head>
+<body>
+    <h1>AI Interview Bot</h1>
+    
+    <div id="upload-section">
+        <div id="difficulty-section">
+            <h3>Select Interview Difficulty</h3>
+            <button class="difficulty-btn easy" onclick="setDifficulty('easy')">EASY (Friendly Interviewer)</button>
+            <button class="difficulty-btn medium" onclick="setDifficulty('medium')">MEDIUM (On Point)</button>
+            <button class="difficulty-btn hard" onclick="setDifficulty('hard')">HARD (Strict Officer)</button>
+        </div>
+        
+        <div id="resume-section" style="display: none;">
+            <h3>Upload Your Resume to Start Interview</h3>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="role-input" placeholder="Job Role (e.g., Software Engineer)" style="width: 200px; padding: 8px; margin: 5px;" />
+                <input type="text" id="company-input" placeholder="Company Name" style="width: 200px; padding: 8px; margin: 5px;" />
+                <input type="text" id="location-input" placeholder="Location (optional)" style="width: 150px; padding: 8px; margin: 5px;" />
+            </div>
+            <input type="file" id="file-input" accept=".txt,.pdf,.doc,.docx,.png,.jpg,.jpeg,.bmp,.tiff" />
+            <button onclick="uploadResume()">Upload Resume</button>
+        </div>
+    </div>
+    
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your answer..." onkeypress="handleKeyPress(event)" disabled>
+        <button onclick="sendMessage()" id="send-btn" disabled>Send</button>
+        <button onclick="clearChat()">Clear</button>
+    </div>
+
+    <script>
+        function setDifficulty(level) {
+            fetch('/set_difficulty', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({difficulty: level})
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage(`Difficulty set to: ${level.toUpperCase()}`, 'system');
+                document.getElementById('difficulty-section').style.display = 'none';
+                document.getElementById('resume-section').style.display = 'block';
+            });
+        }
+
+        function uploadResume() {
+            const fileInput = document.getElementById('file-input');
+            const roleInput = document.getElementById('role-input');
+            const companyInput = document.getElementById('company-input');
+            const locationInput = document.getElementById('location-input');
+            
+            const file = fileInput.files[0];
+            const role = roleInput.value.trim();
+            const company = companyInput.value.trim();
+            const location = locationInput.value.trim();
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            if (!role || !company) {
+                alert('Please enter both job role and company name');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('resume', file);
+            formData.append('role', role);
+            formData.append('company', company);
+            formData.append('location', location);
+            
+            addMessage('Processing resume...', 'system');
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.first_question) {
+                    addMessage(`Resume uploaded successfully!`, 'system');
+                    addMessage(`Interview for ${role} position at ${company}`, 'system');
+                    addMessage('Interviewer: ' + data.first_question, 'assistant');
+                    if (data.question_info) {
+                        addMessage(data.question_info, 'system');
+                    }
+                    document.getElementById('message-input').disabled = false;
+                    document.getElementById('send-btn').disabled = false;
+                    document.getElementById('upload-section').style.display = 'none';
+                } else {
+                    addMessage('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addMessage('Upload failed: ' + error, 'error');
+            });
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('You: ' + message, 'user');
+            input.value = '';
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: message})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    addMessage('Interviewer: ' + data.response, 'assistant');
+                    if (data.question_info) {
+                        addMessage(data.question_info, 'system');
+                    }
+                    if (data.interview_complete) {
+                        document.getElementById('message-input').disabled = true;
+                        document.getElementById('send-btn').disabled = true;
+                    }
+                } else {
+                    addMessage('Error: ' + data.error, 'error');
+                }
+            });
+        }
+
+        function addMessage(text, className) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = 'message ' + className;
+            div.textContent = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChat() {
+            fetch('/clear', {method: 'POST'})
+            .then(() => {
+                document.getElementById('chat-container').innerHTML = '';
+                document.getElementById('upload-section').style.display = 'block';
+                document.getElementById('difficulty-section').style.display = 'block';
+                document.getElementById('resume-section').style.display = 'none';
+                document.getElementById('message-input').disabled = true;
+                document.getElementById('send-btn').disabled = true;
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

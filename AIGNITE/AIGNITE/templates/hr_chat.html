@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HR Interview</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-container { border: 1px solid #ccc; height: 400px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin: 10px 0; }
+        .user { color: blue; }
+        .assistant { color: green; }
+        .system { color: #666; font-style: italic; }
+        .error { color: red; }
+        #input-container { display: flex; gap: 10px; margin-top: 10px; }
+        #message-input { flex: 1; padding: 10px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>HR Interview Round</h1>
+    
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your answer..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()" id="send-btn">Send</button>
+        <button onclick="clearChat()">Clear</button>
+    </div>
+
+    <script>
+        // Start HR interview automatically
+        window.onload = function() {
+            fetch('/start_hr', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.first_question) {
+                    addMessage('HR Interviewer: ' + data.first_question, 'assistant');
+                }
+            });
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('You: ' + message, 'user');
+            input.value = '';
+
+            fetch('/hr_chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: message})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    addMessage('HR Interviewer: ' + data.response, 'assistant');
+                    if (data.show_report) {
+                        setTimeout(() => {
+                            window.open('/view_report', '_blank');
+                        }, 2000);
+                    }
+                    if (data.interview_complete) {
+                        document.getElementById('message-input').disabled = true;
+                        document.getElementById('send-btn').disabled = true;
+                    }
+                } else {
+                    addMessage('Error: ' + data.error, 'error');
+                }
+            });
+        }
+
+        function addMessage(text, className) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = 'message ' + className;
+            div.textContent = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChat() {
+            fetch('/clear', {method: 'POST'})
+            .then(() => {
+                document.getElementById('chat-container').innerHTML = '';
+                window.location.href = '/';
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

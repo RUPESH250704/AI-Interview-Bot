@@ -9,7 +9,8 @@ const TechnicalInterview = () => {
   const [formData, setFormData] = useState({
     company: '',
     role: '',
-    resume: null
+    resume: null,
+    difficulty: 'medium'
   });
 
   const menuItems = [
@@ -29,6 +30,12 @@ const TechnicalInterview = () => {
     'Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Netflix', 'Tesla', 'Uber'
   ];
 
+  const difficulties = [
+    { value: 'easy', label: 'Easy - Basic questions' },
+    { value: 'medium', label: 'Medium - Standard difficulty' },
+    { value: 'hard', label: 'Hard - Challenging questions' }
+  ];
+
   const handleCompanyChange = (e) => {
     setFormData({ ...formData, company: e.target.value, role: '' });
   };
@@ -39,12 +46,19 @@ const TechnicalInterview = () => {
 
   const handleResumeChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setFormData({ ...formData, resume: file });
-    } else {
-      alert('Please select a PDF file only.');
-      e.target.value = '';
+    if (file) {
+      // Check if file is PDF
+      if (file.type === 'application/pdf') {
+        setFormData({ ...formData, resume: file });
+      } else {
+        alert('Please select a PDF file only.');
+        e.target.value = '';
+      }
     }
+  };
+
+  const handleDifficultyChange = (e) => {
+    setFormData({ ...formData, difficulty: e.target.value });
   };
 
   const handleSubmit = (e) => {
@@ -56,7 +70,8 @@ const TechnicalInterview = () => {
             type: 'Technical',
             company: formData.company,
             role: formData.role,
-            resume: formData.resume
+            resume: formData.resume,
+            difficulty: formData.difficulty
           }
         }
       });
@@ -92,6 +107,10 @@ const TechnicalInterview = () => {
         <div className="main-content">
           <div className="container">
             <h1>Technical Interview</h1>
+            <p className="form-description">
+              Start your technical interview practice. Select a company, role, and upload your resume.
+            </p>
+            
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="company">Select Company:</label>
@@ -100,6 +119,7 @@ const TechnicalInterview = () => {
                   value={formData.company} 
                   onChange={handleCompanyChange} 
                   required
+                  className="form-select"
                 >
                   <option value="">Choose a company...</option>
                   {companies.map(company => (
@@ -116,6 +136,7 @@ const TechnicalInterview = () => {
                   onChange={handleRoleChange} 
                   disabled={!formData.company}
                   required
+                  className="form-select"
                 >
                   <option value="">{formData.company ? 'Choose a role...' : 'First select a company...'}</option>
                   {formData.company && roles.map(role => (
@@ -125,23 +146,63 @@ const TechnicalInterview = () => {
               </div>
               
               <div className="form-group">
-                <label htmlFor="resume">Upload Resume (PDF only):</label>
-                <input 
-                  type="file" 
-                  id="resume" 
-                  accept=".pdf" 
-                  onChange={handleResumeChange}
+                <label htmlFor="difficulty">Select Difficulty:</label>
+                <select 
+                  id="difficulty" 
+                  value={formData.difficulty} 
+                  onChange={handleDifficultyChange}
                   required
-                />
-                {formData.resume && (
-                  <div className="file-info">
-                    Selected: {formData.resume.name} ({(formData.resume.size / 1024 / 1024).toFixed(2)} MB)
-                  </div>
-                )}
+                  className="form-select"
+                >
+                  {difficulties.map(diff => (
+                    <option key={diff.value} value={diff.value}>{diff.label}</option>
+                  ))}
+                </select>
               </div>
               
-              <button type="submit" className="btn" disabled={!isFormValid}>
-                Start Technical Interview
+              <div className="form-group">
+                <label htmlFor="resume">Upload Resume (PDF only):</label>
+                <div className="file-upload-area">
+                  <input 
+                    type="file" 
+                    id="resume" 
+                    accept=".pdf" 
+                    onChange={handleResumeChange}
+                    required
+                    className="file-input"
+                  />
+                  <label htmlFor="resume" className="file-label">
+                    <span className="file-icon">📄</span>
+                    <span>Click to upload PDF resume</span>
+                  </label>
+                  {formData.resume && (
+                    <div className="file-info">
+                      <div className="file-name">
+                        <span className="file-icon-small">📄</span>
+                        {formData.resume.name}
+                      </div>
+                      <div className="file-size">
+                        {(formData.resume.size / 1024 / 1024).toFixed(2)} MB
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="file-hint">Only PDF files are accepted. Max size: 16MB</p>
+              </div>
+              
+              <button 
+                type="submit" 
+                className="btn" 
+                disabled={!isFormValid}
+              >
+                {isFormValid ? (
+                  <>
+                    <span className="btn-icon">🚀</span>
+                    Start Technical Interview
+                  </>
+                ) : (
+                  'Fill all fields to continue'
+                )}
               </button>
             </form>
           </div>
