@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import StaggeredMenu from './StaggeredMenu';
 import Squares from './Squares';
+import FaceDetector from './FaceDetector';
 import './ChatInterview.css';
 
 const ChatInterview = () => {
@@ -11,6 +12,7 @@ const ChatInterview = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [interviewEnded, setInterviewEnded] = useState(false);
   const messagesEndRef = useRef(null);
 
   const menuItems = [
@@ -140,7 +142,13 @@ const ChatInterview = () => {
     }
   };
 
+  const handleFaceViolation = () => {
+    endInterview();
+  };
+
   const endInterview = () => {
+    if (interviewEnded) return;
+    setInterviewEnded(true);
     try {
       if (document.fullscreenElement) {
         document.exitFullscreen();
@@ -186,6 +194,7 @@ const ChatInterview = () => {
         />
         
         <div className="chat-container">
+          <FaceDetector onViolation={handleFaceViolation} />
           <div className="chat-header">
             <h2>{interviewData.type} Interview - {interviewData.company}</h2>
             <p>Role: {interviewData.role}</p>
